@@ -124,62 +124,58 @@ export async function updateEmployeeRecord(req, res) {
     const { id } = req.params;
 
     const employee = {
-      employee_no: req.body.employeeNo,
-      biometric_id: req.body.biometricId,
+      employee_no: req.body.employee_no,
+      biometric_id: req.body.biometric_id,
 
       prefix: req.body.prefix || null,
-      first_name: req.body.firstName || null,
-      middle_name: req.body.middleName || null,
-      last_name: req.body.lastName || null,
+      first_name: req.body.first_name || null,
+      middle_name: req.body.middle_name || null,
+      last_name: req.body.last_name || null,
       suffix: req.body.suffix || null,
 
       street1: req.body.street1 || null,
       street2: req.body.street2 || null,
       city: req.body.city || null,
       province: req.body.province || null,
-      postal_code: req.body.postalCode || null,
+      postal_code: req.body.postal_code || null,
 
-      home_phone: req.body.homePhone || null,
-      mobile_phone: req.body.mobilePhone || null,
-      email_address: req.body.emailAddress || null,
+      home_phone: req.body.home_phone || null,
+      mobile_phone: req.body.mobile_phone || null,
+      email_address: req.body.email_address || null,
 
-      spouse_name: req.body.spouseName || null,
-      spouse_occupation: req.body.spouseOccupation || null,
+      spouse_name: req.body.spouse_name || null,
+      spouse_occupation: req.body.spouse_occupation || null,
 
-      emergency_name: req.body.emergencyName || null,
-      emergency_address: req.body.emergencyAddress || null,
-      emergency_phone: req.body.emergencyPhone || null,
+      emergency_name: req.body.emergency_name || null,
+      emergency_address: req.body.emergency_address || null,
+      emergency_phone: req.body.emergency_phone || null,
 
       sex: req.body.sex || null,
-      civil_status: req.body.civilStatus || null,
-      birth_date: req.body.birthDate || null,
-      birth_place: req.body.birthPlace || null,
+      civil_status: req.body.civil_status || null,
+      birth_date: req.body.birth_date || null,
+      birth_place: req.body.birth_place || null,
       religion: req.body.religion || null,
       citizenship: req.body.citizenship || null,
 
-      tin_no: req.body.tinNo || null,
-      sss_no: req.body.sssNo || null,
-      philhealth_no: req.body.philhealthNo || null,
-      pagibig_no: req.body.pagibigNo || null,
+      tin_no: req.body.tin_no || null,
+      sss_no: req.body.sss_no || null,
+      philhealth_no: req.body.philhealth_no || null,
+      pagibig_no: req.body.pagibig_no || null,
 
       remarks: req.body.remarks || null,
 
-      date_hired: req.body.dateHired || null,
-      type_id: req.body.typeId || null,
-      department_id: req.body.departmentId || null,
-      job_title_id: req.body.jobTitleId || null,
+      date_hired: req.body.date_hired || null,
+      department_id: req.body.department_id || null,
 
-      sched_in: req.body.schedIn || null,
-      sched_out: req.body.schedOut || null,
+      sched_in: req.body.sched_in || null,
+      sched_out: req.body.sched_out || null,
 
-      pay_type: req.body.payType || null,
-      yearly_count: req.body.yearlyCount || null,
       is_active:
-        req.body.isActive === "true" ||
-        req.body.isActive === true ||
-        req.body.isActive === "1",
+        req.body.is_active === "true" ||
+        req.body.is_active === true ||
+        req.body.is_active === "1",
 
-      min_allow: req.body.minAllow || "0.00",
+      min_allow: req.body.min_allow || "0.00",
     };
 
     /*

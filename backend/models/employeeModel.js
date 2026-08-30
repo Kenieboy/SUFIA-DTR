@@ -163,7 +163,6 @@ export async function createEmployee(employee) {
     department_id,
     sched_in,
     sched_out,
-    pay_type,
     is_active,
     min_allow,
   } = employee;
@@ -207,14 +206,13 @@ export async function createEmployee(employee) {
         department_id,
         sched_in,
         sched_out,
-        pay_type,
         is_active,
         min_allow
       )
       VALUES (
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?
       )
     `,
     [
@@ -254,7 +252,6 @@ export async function createEmployee(employee) {
       department_id ?? null,
       sched_in ?? null,
       sched_out ?? null,
-      pay_type ?? null,
       is_active ?? 1,
       min_allow ?? 0.0,
     ],
@@ -298,13 +295,9 @@ export async function updateEmployee(id, employee) {
     pagibig_no,
     remarks,
     date_hired,
-    type_id,
     department_id,
-    job_title_id,
     sched_in,
     sched_out,
-    pay_type,
-    yearly_count,
     is_active,
     min_allow,
   } = employee;
@@ -346,13 +339,9 @@ export async function updateEmployee(id, employee) {
         pagibig_no = ?,
         remarks = ?,
         date_hired = ?,
-        type_id = ?,
         department_id = ?,
-        job_title_id = ?,
         sched_in = ?,
         sched_out = ?,
-        pay_type = ?,
-        yearly_count = ?,
         is_active = ?,
         min_allow = ?
       WHERE id = ?
@@ -391,13 +380,9 @@ export async function updateEmployee(id, employee) {
       pagibig_no ?? null,
       remarks ?? null,
       date_hired ?? null,
-      type_id ?? null,
       department_id ?? null,
-      job_title_id ?? null,
       sched_in ?? null,
       sched_out ?? null,
-      pay_type ?? null,
-      yearly_count ?? null,
       is_active ?? 1,
       min_allow ?? 0.0,
       id,

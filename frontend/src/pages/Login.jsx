@@ -50,15 +50,12 @@ export default function Login() {
       setLoading(true);
 
       /*
-       * Call UserContext login()
+       * UserContext login() will:
        *
-       * This will:
-       *
-       * POST /api/auth/login
-       *
-       * then
-       *
-       * GET /api/auth/profile
+       * 1. POST /api/auth/login
+       * 2. GET /api/auth/profile
+       * 3. setUser()
+       * 4. refresh the page after successful validation
        */
       await login(username.trim(), password);
 
@@ -147,9 +144,7 @@ export default function Login() {
               font-bold
               leading-tight
             "
-          >
-            {/* Manage your workforce with confidence. */}
-          </h2>
+          ></h2>
 
           <p
             className="
@@ -157,14 +152,13 @@ export default function Login() {
               max-w-lg
               text-slate-400
             "
-          >
-            {/* Manage employees, attendance, leaves, payroll, reports, and other HR
-            operations in one place. */}
-          </p>
+          ></p>
         </div>
 
         {/* Footer */}
-        <p className="text-sm text-slate-500">© 2026 HR Management System</p>
+        <p className="text-sm text-slate-500">
+          © 2026 HR Management System - FRP
+        </p>
       </div>
 
       {/* =========================

@@ -9,9 +9,7 @@ export function UserProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   /*
-   * Check the currently logged-in user.
-   *
-   * GET /api/auth/profile
+   * Load currently authenticated user
    */
   async function loadUser() {
     try {
@@ -19,37 +17,60 @@ export function UserProvider({ children }) {
 
       setUser(response.data.user);
     } catch (error) {
-      /*
-       * 401 is expected when there is no
-       * authenticated session.
-       */
       if (error.response?.status === 401) {
+        // Token is missing or expired
         setUser(null);
-        return;
+      } else {
+        console.error("Failed to load user:", error);
       }
-
-      /*
-       * Only log unexpected errors.
-       */
-      console.error("Unable to load user profile:", error);
-
-      setUser(null);
     } finally {
       setLoading(false);
     }
   }
 
   /*
-   * Check authentication when the app starts.
+   * Check authentication when app starts
    */
   useEffect(() => {
     loadUser();
   }, []);
 
   /*
+   * Automatically logout when token expires
+   */
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+
+      async (error) => {
+        if (error.response?.status === 401) {
+          try {
+            // Tell backend to clear the authentication cookie
+            await api.post("/auth/logout");
+          } catch {
+            // Ignore logout errors
+          } finally {
+            // Remove user from React state
+            setUser(null);
+
+            // Redirect to login
+            if (window.location.pathname !== "/login") {
+              window.location.href = "/login";
+            }
+          }
+        }
+
+        return Promise.reject(error);
+      },
+    );
+
+    return () => {
+      api.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
+  /*
    * Login
-   *
-   * POST /api/auth/login
    */
   async function login(username, password) {
     const response = await api.post("/auth/login", {
@@ -57,14 +78,11 @@ export function UserProvider({ children }) {
       password,
     });
 
-    /*
-     * The backend should set the authentication
-     * cookie during login.
-     *
-     * After that, retrieve the authenticated
-     * user's profile.
-     */
-    await loadUser();
+    const profileResponse = await api.get("/auth/profile");
+
+    setUser(profileResponse.data.user);
+
+    window.location.reload();
 
     return response.data;
   }
@@ -76,15 +94,15 @@ export function UserProvider({ children }) {
     try {
       await api.post("/auth/logout");
     } catch (error) {
-      /*
-       * A 401 during logout is not a problem.
-       * The session is already unauthenticated.
-       */
       if (error.response?.status !== 401) {
         console.error("Unable to logout:", error);
       }
     } finally {
       setUser(null);
+
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
   }
 

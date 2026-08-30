@@ -19,6 +19,7 @@ import api from "../services/api";
 
 import { getDepartments } from "../services/departmentServices";
 import ComboboxField from "./ComboboxField";
+import { createEmployee, updateEmployee } from "../services/employeeService";
 
 /* =================================
    INITIAL FORM
@@ -223,38 +224,32 @@ export default function EmployeeForm() {
     }
   }, [employee]);
 
+  // useEffect(() => {
+  //   if (isEdit) {
+  //     console.log("EDIT FORM:", form);
+  //   }
+  // }, [form, isEdit]);
+
   /* =================================
      CREATE / UPDATE MUTATION
   ================================= */
 
   const saveMutation = useMutation({
     mutationFn: async ({ formData, id }) => {
+      const data = Object.fromEntries(formData.entries());
+
       if (id) {
-        return api.put(`/employees/${id}`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        return updateEmployee(id, data);
       }
 
-      return api.post("/employees", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      return createEmployee(formData);
     },
 
     onSuccess: async () => {
-      /*
-       * Refresh employee list
-       */
       await queryClient.invalidateQueries({
         queryKey: ["employees"],
       });
 
-      /*
-       * Refresh current employee
-       */
       if (id) {
         await queryClient.invalidateQueries({
           queryKey: ["employee", id],
@@ -262,6 +257,12 @@ export default function EmployeeForm() {
       }
 
       navigate("/employee");
+    },
+
+    onError: (error) => {
+      console.error("SAVE EMPLOYEE ERROR:", error);
+      console.error("STATUS:", error.response?.status);
+      console.error("BACKEND RESPONSE:", error.response?.data);
     },
   });
 
@@ -524,6 +525,8 @@ export default function EmployeeForm() {
               onChange={handleChange}
               placeholder="EMP-0001"
               required
+              bold
+              uppercase
             />
 
             <InputField
@@ -533,6 +536,8 @@ export default function EmployeeForm() {
               onChange={handleChange}
               placeholder="Biometric ID"
               required
+              bold
+              uppercase
             />
 
             <SelectField
@@ -558,6 +563,8 @@ export default function EmployeeForm() {
               onChange={handleChange}
               placeholder="First name"
               required
+              bold
+              uppercase
             />
 
             <InputField
@@ -566,6 +573,8 @@ export default function EmployeeForm() {
               value={form.middleName}
               onChange={handleChange}
               placeholder="Middle name"
+              bold
+              uppercase
             />
 
             <InputField
@@ -575,6 +584,8 @@ export default function EmployeeForm() {
               onChange={handleChange}
               placeholder="Last name"
               required
+              bold
+              uppercase
             />
 
             <SelectField
@@ -605,6 +616,7 @@ export default function EmployeeForm() {
               type="date"
               value={form.birthDate}
               onChange={handleChange}
+              bold
             />
 
             <InputField
@@ -613,6 +625,7 @@ export default function EmployeeForm() {
               value={form.birthPlace}
               onChange={handleChange}
               placeholder="Place of birth"
+              bold
             />
 
             <InputField
@@ -621,6 +634,7 @@ export default function EmployeeForm() {
               value={form.religion}
               onChange={handleChange}
               placeholder="Religion"
+              bold
             />
 
             <InputField
@@ -629,6 +643,8 @@ export default function EmployeeForm() {
               value={form.citizenship}
               onChange={handleChange}
               placeholder="Citizenship"
+              bold
+              uppercase
             />
           </FormSection>
 
@@ -650,6 +666,7 @@ export default function EmployeeForm() {
               onChange={handleChange}
               placeholder="employee@example.com"
               icon={Mail}
+              bold
             />
 
             <InputField
@@ -659,6 +676,7 @@ export default function EmployeeForm() {
               onChange={handleChange}
               placeholder="09XX XXX XXXX"
               icon={Phone}
+              bold
             />
 
             <InputField
@@ -667,6 +685,7 @@ export default function EmployeeForm() {
               value={form.homePhone}
               onChange={handleChange}
               placeholder="Home phone number"
+              bold
             />
           </FormSection>
 
@@ -687,6 +706,7 @@ export default function EmployeeForm() {
                 value={form.street1}
                 onChange={handleChange}
                 placeholder="House / Building / Street"
+                bold
               />
             </div>
 
@@ -697,6 +717,7 @@ export default function EmployeeForm() {
                 value={form.street2}
                 onChange={handleChange}
                 placeholder="Apartment / Unit / Barangay"
+                bold
               />
             </div>
 
@@ -706,6 +727,7 @@ export default function EmployeeForm() {
               value={form.city}
               onChange={handleChange}
               placeholder="City / Municipality"
+              bold
             />
 
             <InputField
@@ -714,6 +736,7 @@ export default function EmployeeForm() {
               value={form.province}
               onChange={handleChange}
               placeholder="Province"
+              bold
             />
 
             <InputField
@@ -722,6 +745,7 @@ export default function EmployeeForm() {
               value={form.postalCode}
               onChange={handleChange}
               placeholder="Postal Code"
+              bold
             />
           </FormSection>
 
@@ -742,6 +766,8 @@ export default function EmployeeForm() {
                 value={form.spouseName}
                 onChange={handleChange}
                 placeholder="Full name"
+                bold
+                uppercase
               />
             </div>
 
@@ -752,6 +778,7 @@ export default function EmployeeForm() {
                 value={form.spouseOccupation}
                 onChange={handleChange}
                 placeholder="Occupation"
+                bold
               />
             </div>
           </FormSection>
@@ -773,6 +800,8 @@ export default function EmployeeForm() {
                 value={form.emergencyName}
                 onChange={handleChange}
                 placeholder="Full name"
+                bold
+                uppercase
               />
             </div>
 
@@ -782,6 +811,7 @@ export default function EmployeeForm() {
               value={form.emergencyPhone}
               onChange={handleChange}
               placeholder="Phone number"
+              bold
             />
 
             <div className="lg:col-span-4">
@@ -791,6 +821,7 @@ export default function EmployeeForm() {
                 value={form.emergencyAddress}
                 onChange={handleChange}
                 placeholder="Emergency contact address"
+                bold
               />
             </div>
           </FormSection>
@@ -811,6 +842,7 @@ export default function EmployeeForm() {
               value={form.tinNo}
               onChange={handleChange}
               placeholder="TIN number"
+              bold
             />
 
             <InputField
@@ -819,6 +851,7 @@ export default function EmployeeForm() {
               value={form.sssNo}
               onChange={handleChange}
               placeholder="SSS number"
+              bold
             />
 
             <InputField
@@ -827,6 +860,7 @@ export default function EmployeeForm() {
               value={form.philhealthNo}
               onChange={handleChange}
               placeholder="PhilHealth number"
+              bold
             />
 
             <InputField
@@ -835,6 +869,7 @@ export default function EmployeeForm() {
               value={form.pagibigNo}
               onChange={handleChange}
               placeholder="Pag-IBIG number"
+              bold
             />
           </FormSection>
 
@@ -848,14 +883,14 @@ export default function EmployeeForm() {
             title="Employment Information"
             description="Position and employment details"
           >
-            <InputField
+            {/* <InputField
               label="Department ID"
               name="departmentId"
               type="number"
               value={form.departmentId}
               onChange={handleChange}
               placeholder="Department ID"
-            />
+            /> */}
 
             <ComboboxField
               label="Department"
@@ -864,6 +899,7 @@ export default function EmployeeForm() {
               onChange={handleChange}
               options={departments}
               loading={departmentsLoading}
+              required
             />
 
             <InputField
@@ -873,17 +909,20 @@ export default function EmployeeForm() {
               value={form.dateHired}
               onChange={handleChange}
               icon={CalendarDays}
+              required
+              bold
             />
 
-            <SelectField
+            {/* <SelectField
               label="Pay Type"
               name="payType"
               value={form.payType}
               onChange={handleChange}
-              options={["1", "2"]}
-            />
+              options={["Daily", "Monthly"]}
+              required
+            /> */}
 
-            <InputField
+            {/* <InputField
               label="Minimum Allowance"
               name="minAllow"
               type="number"
@@ -891,7 +930,7 @@ export default function EmployeeForm() {
               value={form.minAllow}
               onChange={handleChange}
               placeholder="0.00"
-            />
+            /> */}
 
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
@@ -937,6 +976,7 @@ export default function EmployeeForm() {
               type="time"
               value={form.schedIn}
               onChange={handleChange}
+              bold
             />
 
             <InputField
@@ -945,6 +985,7 @@ export default function EmployeeForm() {
               type="time"
               value={form.schedOut}
               onChange={handleChange}
+              bold
             />
           </FormSection>
 
@@ -1075,6 +1116,8 @@ function InputField({
   required = false,
   icon: Icon,
   step,
+  bold = false,
+  uppercase = false,
 }) {
   return (
     <div>
@@ -1110,6 +1153,8 @@ function InputField({
             bg-white py-2
             ${Icon ? "pl-9" : "pl-3"}
             pr-3 text-[12px]
+            ${bold ? "font-bold" : "font-normal"}
+            ${uppercase ? "uppercase" : ""}
             text-slate-700
             outline-none transition
             placeholder:text-slate-400
