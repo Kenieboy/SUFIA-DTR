@@ -24,29 +24,42 @@ function EmployeeRecord() {
   const [department, setDepartment] = useState("All");
   const [openMenu, setOpenMenu] = useState(null);
 
-  /*
-   * ========================================
-   * GET EMPLOYEES
-   * ========================================
-   */
+  // ========================================
+  // PAGINATION
+  // ========================================
 
-  const {
-    data: employees = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["employees", search],
-    queryFn: () => getEmployees(search),
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 10;
+
+  // ========================================
+  // GET EMPLOYEES
+  // ========================================
+
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
+    queryKey: ["employees", search, currentPage, itemsPerPage],
+    queryFn: () =>
+      getEmployees({
+        search,
+        page: currentPage,
+        limit: itemsPerPage,
+      }),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previousData) => previousData,
   });
 
-  /*
-   * ========================================
-   * DEPARTMENTS
-   * ========================================
-   */
+  const employees = data?.data ?? [];
+
+  const pagination = data?.pagination ?? {
+    page: 1,
+    limit: itemsPerPage,
+    total: 0,
+    totalPages: 0,
+  };
+
+  // ========================================
+  // DEPARTMENTS
+  // ========================================
 
   const departments = useMemo(() => {
     const values = employees
@@ -56,15 +69,14 @@ function EmployeeRecord() {
     return ["All", ...new Set(values)];
   }, [employees]);
 
-  /*
-   * ========================================
-   * FILTER EMPLOYEES
-   * ========================================
-   */
+  // ========================================
+  // FILTER EMPLOYEES
+  // ========================================
 
   const filteredEmployees = useMemo(() => {
     return employees.filter((employee) => {
-      const employeeStatus = employee.is_active ? "Active" : "Inactive";
+      const employeeStatus =
+        Number(employee.is_active) === 1 ? "Active" : "Inactive";
 
       const matchesStatus = status === "All" || employeeStatus === status;
 
@@ -75,13 +87,11 @@ function EmployeeRecord() {
     });
   }, [employees, status, department]);
 
-  /*
-   * ========================================
-   * SUMMARY
-   * ========================================
-   */
+  // ========================================
+  // SUMMARY
+  // ========================================
 
-  const totalEmployees = employees.length;
+  const totalEmployees = pagination.total;
 
   const activeEmployees = employees.filter(
     (employee) => Number(employee.is_active) === 1,
@@ -90,6 +100,100 @@ function EmployeeRecord() {
   const inactiveEmployees = employees.filter(
     (employee) => Number(employee.is_active) === 0,
   ).length;
+
+  // ========================================
+  // SEARCH / FILTER RESET
+  // ========================================
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (e) => {
+    setStatus(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleDepartmentChange = (e) => {
+    setDepartment(e.target.value);
+    setCurrentPage(1);
+  };
+
+  // ========================================
+  // PAGINATION
+  // ========================================
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((page) => page - 1);
+      setOpenMenu(null);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < pagination.totalPages) {
+      setCurrentPage((page) => page + 1);
+      setOpenMenu(null);
+    }
+  };
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      setCurrentPage(page);
+      setOpenMenu(null);
+    }
+  };
+
+  // ========================================
+  // DISPLAY RANGE
+  // ========================================
+
+  const showingFrom =
+    pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1;
+
+  const showingTo =
+    pagination.total === 0
+      ? 0
+      : Math.min(pagination.page * pagination.limit, pagination.total);
+
+  // ========================================
+  // PAGE NUMBERS
+  // ========================================
+
+  const pageNumbers = useMemo(() => {
+    const totalPages = pagination.totalPages;
+
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (currentPage <= 4) {
+      return [1, 2, 3, 4, 5, "...", totalPages];
+    }
+
+    if (currentPage >= totalPages - 3) {
+      return [
+        1,
+        "...",
+        totalPages - 4,
+        totalPages - 3,
+        totalPages - 2,
+        totalPages - 1,
+        totalPages,
+      ];
+    }
+
+    return [
+      1,
+      "...",
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+      "...",
+      totalPages,
+    ];
+  }, [currentPage, pagination.totalPages]);
 
   return (
     <div className="space-y-4">
@@ -238,7 +342,7 @@ function EmployeeRecord() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={handleSearchChange}
               placeholder="Search employee..."
               className="
                 w-full
@@ -265,9 +369,9 @@ function EmployeeRecord() {
           {/* Filters */}
 
           <div className="flex flex-wrap gap-2">
-            <select
+            {/* <select
               value={department}
-              onChange={(e) => setDepartment(e.target.value)}
+              onChange={handleDepartmentChange}
               className="
                 rounded-lg
                 border
@@ -286,11 +390,11 @@ function EmployeeRecord() {
                   {item === "All" ? "All Departments" : item}
                 </option>
               ))}
-            </select>
+            </select> */}
 
             <select
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={handleStatusChange}
               className="
                 rounded-lg
                 border
@@ -363,356 +467,433 @@ function EmployeeRecord() {
         ======================================= */}
 
         {!isLoading && !isError && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Employee
-                  </th>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Employee
+                    </th>
 
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Department
-                  </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Department
+                    </th>
 
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Position
-                  </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Position
+                    </th>
 
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Contact
-                  </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Contact
+                    </th>
 
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Status
-                  </th>
+                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Status
+                    </th>
 
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    Action
-                  </th>
-                </tr>
-              </thead>
+                    <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
 
-              <tbody>
-                {filteredEmployees.length > 0 ? (
-                  filteredEmployees.map((employee) => {
-                    const status =
-                      Number(employee.is_active) === 1 ? "Active" : "Inactive";
+                <tbody>
+                  {filteredEmployees.length > 0 ? (
+                    filteredEmployees.map((employee) => {
+                      const employeeStatus =
+                        Number(employee.is_active) === 1
+                          ? "Active"
+                          : "Inactive";
 
-                    const initials = employee.full_name
-                      ?.split(" ")
-                      .filter(Boolean)
-                      .map((name) => name[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase();
+                      const initials = employee.full_name
+                        ?.split(" ")
+                        .filter(Boolean)
+                        .map((name) => name[0])
+                        .slice(0, 2)
+                        .join("")
+                        .toUpperCase();
+
+                      return (
+                        <tr
+                          key={employee.id}
+                          className="
+                            border-b
+                            border-slate-100
+                            transition
+                            hover:bg-slate-50
+                          "
+                        >
+                          {/* Employee */}
+
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="
+                                  flex
+                                  h-8
+                                  w-8
+                                  shrink-0
+                                  items-center
+                                  justify-center
+                                  overflow-hidden
+                                  rounded-full
+                                  bg-blue-50
+                                  text-[11px]
+                                  font-semibold
+                                  text-blue-600
+                                "
+                              >
+                                {employee.photo ? (
+                                  <img
+                                    src={`/uploads/${employee.photo}`}
+                                    alt={employee.full_name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  initials || "NA"
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="truncate text-[12px] font-medium text-slate-700">
+                                  {employee.full_name}
+                                </p>
+
+                                <p className="mt-0.5 text-[10px] text-slate-400">
+                                  {employee.employee_no}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Department */}
+
+                          <td className="px-4 py-3 text-[12px] text-slate-600">
+                            {employee.department_name || "-"}
+                          </td>
+
+                          {/* Position */}
+
+                          <td className="px-4 py-3 text-[12px] text-slate-600">
+                            {employee.job_title || "-"}
+                          </td>
+
+                          {/* Contact */}
+
+                          <td className="px-4 py-3 text-[12px] text-slate-500">
+                            {employee.mobile_phone ||
+                              employee.home_phone ||
+                              "-"}
+                          </td>
+
+                          {/* Status */}
+
+                          <td className="px-4 py-3">
+                            <span
+                              className={`
+                                inline-flex
+                                rounded-full
+                                px-2
+                                py-1
+                                text-[10px]
+                                font-medium
+
+                                ${
+                                  employeeStatus === "Active"
+                                    ? "bg-emerald-50 text-emerald-600"
+                                    : "bg-slate-100 text-slate-500"
+                                }
+                              `}
+                            >
+                              {employeeStatus}
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+
+                          <td className="relative px-4 py-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenMenu(
+                                  openMenu === employee.id ? null : employee.id,
+                                )
+                              }
+                              className="
+                                rounded-md
+                                p-1.5
+                                text-slate-400
+                                transition
+                                hover:bg-slate-100
+                                hover:text-slate-700
+                              "
+                            >
+                              <MoreHorizontal size={17} />
+                            </button>
+
+                            {openMenu === employee.id && (
+                              <div
+                                className="
+                                  absolute
+                                  right-4
+                                  top-10
+                                  z-20
+                                  w-36
+                                  rounded-lg
+                                  border
+                                  border-slate-200
+                                  bg-white
+                                  p-1
+                                  text-left
+                                  shadow-lg
+                                "
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    navigate(`/employee/${employee.id}`)
+                                  }
+                                  className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    gap-2
+                                    rounded-md
+                                    px-3
+                                    py-2
+                                    text-[11px]
+                                    text-slate-600
+                                    hover:bg-slate-50
+                                  "
+                                >
+                                  <Eye size={14} />
+                                  View Record
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    navigate(`/employee/${employee.id}/edit`)
+                                  }
+                                  className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    gap-2
+                                    rounded-md
+                                    px-3
+                                    py-2
+                                    text-[11px]
+                                    text-slate-600
+                                    hover:bg-slate-50
+                                  "
+                                >
+                                  <Pencil size={14} />
+                                  Edit Employee
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="
+                                    flex
+                                    w-full
+                                    items-center
+                                    gap-2
+                                    rounded-md
+                                    px-3
+                                    py-2
+                                    text-[11px]
+                                    text-red-500
+                                    hover:bg-red-50
+                                  "
+                                >
+                                  <UserX size={14} />
+                                  Deactivate
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="px-4 py-12 text-center">
+                        <p className="text-[12px] font-medium text-slate-500">
+                          No employees found
+                        </p>
+
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          Try changing your search or filters.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ======================================
+                PAGINATION
+            ======================================= */}
+
+            {pagination.total > 0 && (
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-3
+                  border-t
+                  border-slate-200
+                  px-4
+                  py-3
+                  sm:flex-row
+                  sm:items-center
+                  sm:justify-between
+                "
+              >
+                {/* Showing */}
+
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] text-slate-500">
+                    Showing{" "}
+                    <span className="font-medium text-slate-700">
+                      {showingFrom}
+                    </span>{" "}
+                    to{" "}
+                    <span className="font-medium text-slate-700">
+                      {showingTo}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium text-slate-700">
+                      {pagination.total}
+                    </span>{" "}
+                    employees
+                  </p>
+
+                  {isFetching && !isLoading && (
+                    <Loader2
+                      size={13}
+                      className="animate-spin text-slate-400"
+                    />
+                  )}
+                </div>
+
+                {/* Pagination buttons */}
+
+                <div className="flex items-center gap-1">
+                  {/* Previous */}
+
+                  <button
+                    type="button"
+                    disabled={currentPage === 1 || isFetching}
+                    onClick={handlePreviousPage}
+                    className="
+                      flex
+                      h-7
+                      w-7
+                      items-center
+                      justify-center
+                      rounded-md
+                      border
+                      border-slate-200
+                      text-slate-500
+                      transition
+                      hover:bg-slate-50
+                      disabled:cursor-not-allowed
+                      disabled:opacity-40
+                    "
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+
+                  {/* Page Numbers */}
+
+                  {pageNumbers.map((page, index) => {
+                    if (page === "...") {
+                      return (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="
+                            flex
+                            h-7
+                            min-w-7
+                            items-center
+                            justify-center
+                            px-1
+                            text-[11px]
+                            text-slate-400
+                          "
+                        >
+                          ...
+                        </span>
+                      );
+                    }
 
                     return (
-                      <tr
-                        key={employee.id}
-                        className="
-                          border-b
-                          border-slate-100
+                      <button
+                        key={page}
+                        type="button"
+                        disabled={isFetching}
+                        onClick={() => handlePageChange(page)}
+                        className={`
+                          flex
+                          h-7
+                          min-w-7
+                          items-center
+                          justify-center
+                          rounded-md
+                          px-2
+                          text-[11px]
+                          font-medium
                           transition
-                          hover:bg-slate-50
-                        "
+
+                          ${
+                            currentPage === page
+                              ? "bg-blue-600 text-white"
+                              : "text-slate-500 hover:bg-slate-50"
+                          }
+
+                          disabled:cursor-not-allowed
+                          disabled:opacity-50
+                        `}
                       >
-                        {/* Employee */}
-
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="
-                                flex
-                                h-8
-                                w-8
-                                shrink-0
-                                items-center
-                                justify-center
-                                overflow-hidden
-                                rounded-full
-                                bg-blue-50
-                                text-[11px]
-                                font-semibold
-                                text-blue-600
-                              "
-                            >
-                              {employee.photo ? (
-                                <img
-                                  src={`/uploads/${employee.photo}`}
-                                  alt={employee.full_name}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                initials || "NA"
-                              )}
-                            </div>
-
-                            <div className="min-w-0">
-                              <p className="truncate text-[12px] font-medium text-slate-700">
-                                {employee.full_name}
-                              </p>
-
-                              <p className="mt-0.5 text-[10px] text-slate-400">
-                                {employee.employee_no}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Department */}
-
-                        <td className="px-4 py-3 text-[12px] text-slate-600">
-                          {employee.department_name || "-"}
-                        </td>
-
-                        {/* Position */}
-
-                        <td className="px-4 py-3 text-[12px] text-slate-600">
-                          {employee.job_title || "-"}
-                        </td>
-
-                        {/* Contact */}
-
-                        <td className="px-4 py-3 text-[12px] text-slate-500">
-                          {employee.mobile_phone || employee.home_phone || "-"}
-                        </td>
-
-                        {/* Status */}
-
-                        <td className="px-4 py-3">
-                          <span
-                            className={`
-                              inline-flex
-                              rounded-full
-                              px-2
-                              py-1
-                              text-[10px]
-                              font-medium
-
-                              ${
-                                status === "Active"
-                                  ? "bg-emerald-50 text-emerald-600"
-                                  : "bg-slate-100 text-slate-500"
-                              }
-                            `}
-                          >
-                            {status}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-
-                        <td className="relative px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setOpenMenu(
-                                openMenu === employee.id ? null : employee.id,
-                              )
-                            }
-                            className="
-                              rounded-md
-                              p-1.5
-                              text-slate-400
-                              transition
-                              hover:bg-slate-100
-                              hover:text-slate-700
-                            "
-                          >
-                            <MoreHorizontal size={17} />
-                          </button>
-
-                          {openMenu === employee.id && (
-                            <div
-                              className="
-                                absolute
-                                right-4
-                                top-10
-                                z-20
-                                w-36
-                                rounded-lg
-                                border
-                                border-slate-200
-                                bg-white
-                                p-1
-                                text-left
-                                shadow-lg
-                              "
-                            >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  navigate(`/employee/${employee.id}`)
-                                }
-                                className="
-                                  flex
-                                  w-full
-                                  items-center
-                                  gap-2
-                                  rounded-md
-                                  px-3
-                                  py-2
-                                  text-[11px]
-                                  text-slate-600
-                                  hover:bg-slate-50
-                                "
-                              >
-                                <Eye size={14} />
-                                View Record
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  navigate(`/employee/${employee.id}/edit`)
-                                }
-                                className="
-                                  flex
-                                  w-full
-                                  items-center
-                                  gap-2
-                                  rounded-md
-                                  px-3
-                                  py-2
-                                  text-[11px]
-                                  text-slate-600
-                                  hover:bg-slate-50
-                                "
-                              >
-                                <Pencil size={14} />
-                                Edit Employee
-                              </button>
-
-                              <button
-                                type="button"
-                                className="
-                                  flex
-                                  w-full
-                                  items-center
-                                  gap-2
-                                  rounded-md
-                                  px-3
-                                  py-2
-                                  text-[11px]
-                                  text-red-500
-                                  hover:bg-red-50
-                                "
-                              >
-                                <UserX size={14} />
-                                Deactivate
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
+                        {page}
+                      </button>
                     );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="px-4 py-12 text-center">
-                      <p className="text-[12px] font-medium text-slate-500">
-                        No employees found
-                      </p>
+                  })}
 
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        Try changing your search or filters.
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  {/* Next */}
 
-        {/* ======================================
-            PAGINATION
-        ======================================= */}
-
-        {!isLoading && !isError && filteredEmployees.length > 0 && (
-          <div
-            className="
-                flex
-                items-center
-                justify-between
-                border-t
-                border-slate-200
-                px-4
-                py-3
-              "
-          >
-            <p className="text-[11px] text-slate-500">
-              Showing{" "}
-              <span className="font-medium text-slate-700">
-                {filteredEmployees.length}
-              </span>{" "}
-              of{" "}
-              <span className="font-medium text-slate-700">
-                {employees.length}
-              </span>{" "}
-              employees
-            </p>
-
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled
-                className="
-                    flex
-                    h-7
-                    w-7
-                    items-center
-                    justify-center
-                    rounded-md
-                    border
-                    border-slate-200
-                    text-slate-400
-                    disabled:opacity-50
-                  "
-              >
-                <ChevronLeft size={14} />
-              </button>
-
-              <button
-                type="button"
-                className="
-                    flex
-                    h-7
-                    min-w-7
-                    items-center
-                    justify-center
-                    rounded-md
-                    bg-blue-600
-                    px-2
-                    text-[11px]
-                    font-medium
-                    text-white
-                  "
-              >
-                1
-              </button>
-
-              <button
-                type="button"
-                className="
-                    flex
-                    h-7
-                    w-7
-                    items-center
-                    justify-center
-                    rounded-md
-                    border
-                    border-slate-200
-                    text-slate-500
-                    transition
-                    hover:bg-slate-50
-                  "
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          </div>
+                  <button
+                    type="button"
+                    disabled={
+                      currentPage === pagination.totalPages || isFetching
+                    }
+                    onClick={handleNextPage}
+                    className="
+                      flex
+                      h-7
+                      w-7
+                      items-center
+                      justify-center
+                      rounded-md
+                      border
+                      border-slate-200
+                      text-slate-500
+                      transition
+                      hover:bg-slate-50
+                      disabled:cursor-not-allowed
+                      disabled:opacity-40
+                    "
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

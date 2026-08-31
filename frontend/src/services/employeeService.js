@@ -1,13 +1,25 @@
 import api from "./api";
 
-export async function getEmployees(search = "") {
+// export async function getEmployees(search = "") {
+//   const response = await api.get("/employees", {
+//     params: {
+//       search: search || undefined,
+//     },
+//   });
+
+//   return response.data.data;
+// }
+
+export async function getEmployees({ search = "", page = 1, limit = 10 }) {
   const response = await api.get("/employees", {
     params: {
-      search: search || undefined,
+      search,
+      page,
+      limit,
     },
   });
 
-  return response.data.data;
+  return response.data;
 }
 
 export async function getEmployee(id) {

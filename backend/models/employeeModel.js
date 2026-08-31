@@ -1,31 +1,70 @@
 import db from "../config/db.js";
 
-export async function getAllEmployees() {
-  const [rows] = await db.execute(`
-    SELECT
-      e.*,
+// export async function getAllEmployees() {
+//   const [rows] = await db.execute(`
+//     SELECT
+//       e.*,
 
-      CONCAT_WS(
-        ' ',
-        e.prefix,
-        e.first_name,
-        e.middle_name,
-        e.last_name,
-        e.suffix
-      ) AS full_name,
+//       CONCAT_WS(
+//         ' ',
+//         e.prefix,
+//         e.first_name,
+//         e.middle_name,
+//         e.last_name,
+//         e.suffix
+//       ) AS full_name,
 
-      d.code AS department_code,
-      d.description AS department_name
+//       d.code AS department_code,
+//       d.description AS department_name
 
-    FROM employees e
+//     FROM employees e
 
-    LEFT JOIN departments d
-      ON e.department_id = d.id
+//     LEFT JOIN departments d
+//       ON e.department_id = d.id
 
-    ORDER BY e.last_name ASC, e.first_name ASC
+//     ORDER BY e.last_name ASC, e.first_name ASC
+//   `);
+
+//   return rows;
+// }
+
+export async function getAllEmployees(limit, offset) {
+  const [employees] = await db.query(
+    `
+      SELECT
+        e.*,
+        CONCAT_WS(
+          ' ',
+          e.first_name,
+          e.middle_name,
+          e.last_name
+        ) AS full_name,
+        d.description AS department_name,
+        j.description AS job_title
+      FROM employees e
+
+      LEFT JOIN departments d
+        ON e.department_id = d.id
+
+      LEFT JOIN jobtitle j
+        ON e.job_title_id = j.id
+
+      ORDER BY e.id DESC
+
+      LIMIT ? OFFSET ?
+    `,
+    [limit, offset],
+  );
+
+  const [countResult] = await db.query(`
+    SELECT COUNT(*) AS total
+    FROM employees
   `);
 
-  return rows;
+  return {
+    employees,
+    total: countResult[0].total,
+  };
 }
 
 export async function getEmployeeById(id) {
@@ -88,41 +127,107 @@ export async function getEmployeeByBiometricId(biometricId) {
   return rows[0];
 }
 
-export async function searchEmployees(search) {
-  const keyword = `%${search}%`;
+// export async function searchEmployees(search) {
+//   const keyword = `%${search}%`;
 
-  const [rows] = await db.execute(
+//   const [rows] = await db.execute(
+//     `
+//       SELECT
+//         e.*,
+//         CONCAT_WS(
+//           ' ',
+//           e.prefix,
+//           e.first_name,
+//           e.middle_name,
+//           e.last_name,
+//           e.suffix
+//         ) AS full_name
+//       FROM employees e
+//       WHERE
+//         e.employee_no LIKE ?
+//         OR e.biometric_id LIKE ?
+//         OR e.first_name LIKE ?
+//         OR e.middle_name LIKE ?
+//         OR e.last_name LIKE ?
+//         OR e.email_address LIKE ?
+//         OR CONCAT_WS(
+//           ' ',
+//           e.first_name,
+//           e.middle_name,
+//           e.last_name
+//         ) LIKE ?
+//       ORDER BY e.last_name ASC, e.first_name ASC
+//     `,
+//     [keyword, keyword, keyword, keyword, keyword, keyword, keyword],
+//   );
+
+//   return rows;
+// }
+
+export async function searchEmployees(search, limit, offset) {
+  const searchValue = `%${search}%`;
+
+  const [employees] = await db.query(
     `
       SELECT
         e.*,
         CONCAT_WS(
           ' ',
-          e.prefix,
-          e.first_name,
-          e.middle_name,
-          e.last_name,
-          e.suffix
-        ) AS full_name
-      FROM employees e
-      WHERE
-        e.employee_no LIKE ?
-        OR e.biometric_id LIKE ?
-        OR e.first_name LIKE ?
-        OR e.middle_name LIKE ?
-        OR e.last_name LIKE ?
-        OR e.email_address LIKE ?
-        OR CONCAT_WS(
-          ' ',
           e.first_name,
           e.middle_name,
           e.last_name
-        ) LIKE ?
-      ORDER BY e.last_name ASC, e.first_name ASC
+        ) AS full_name,
+        d.description AS department_name,
+        j.description AS job_title
+      FROM employees e
+
+      LEFT JOIN departments d
+        ON e.department_id = d.id
+
+      LEFT JOIN jobtitle j
+        ON e.job_title_id = j.id
+
+      WHERE
+        e.employee_no LIKE ?
+        OR e.first_name LIKE ?
+        OR e.middle_name LIKE ?
+        OR e.last_name LIKE ?
+        OR e.mobile_phone LIKE ?
+
+      ORDER BY e.id DESC
+
+      LIMIT ? OFFSET ?
     `,
-    [keyword, keyword, keyword, keyword, keyword, keyword, keyword],
+    [
+      searchValue,
+      searchValue,
+      searchValue,
+      searchValue,
+      searchValue,
+      limit,
+      offset,
+    ],
   );
 
-  return rows;
+  const [countResult] = await db.query(
+    `
+      SELECT COUNT(*) AS total
+      FROM employees e
+
+      WHERE
+        e.employee_no LIKE ?
+        OR e.first_name LIKE ?
+        OR e.middle_name LIKE ?
+        OR e.last_name LIKE ?
+        OR e.mobile_phone LIKE ?
+    `,
+    [searchValue, searchValue, searchValue, searchValue, searchValue],
+  );
+
+  return {
+    employees,
+    total: countResult[0].total,
+  };
 }
 
 export async function createEmployee(employee) {

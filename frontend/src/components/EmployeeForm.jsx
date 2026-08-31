@@ -501,7 +501,7 @@ export default function EmployeeForm() {
                   </label>
 
                   <p className="mt-1.5 text-[10px] text-slate-400">
-                    JPG, PNG or WEBP. Recommended square image.
+                    JPG. Recommended square image.
                   </p>
                 </div>
               </div>

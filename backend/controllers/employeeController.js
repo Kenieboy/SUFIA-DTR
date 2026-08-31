@@ -9,17 +9,54 @@ import {
   deleteEmployee,
 } from "../models/employeeModel.js";
 
+// export async function getEmployees(req, res) {
+//   try {
+//     const { search } = req.query;
+
+//     const employees = search
+//       ? await searchEmployees(search)
+//       : await getAllEmployees();
+
+//     res.json({
+//       success: true,
+//       data: employees,
+//     });
+//   } catch (error) {
+//     console.error("Get employees error:", error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to retrieve employees.",
+//     });
+//   }
+// }
+
 export async function getEmployees(req, res) {
   try {
     const { search } = req.query;
 
-    const employees = search
-      ? await searchEmployees(search)
-      : await getAllEmployees();
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
+
+    const offset = (page - 1) * limit;
+
+    const result = search
+      ? await searchEmployees(search, limit, offset)
+      : await getAllEmployees(limit, offset);
+
+    const { employees, total } = result;
+
+    const totalPages = Math.ceil(total / limit);
 
     res.json({
       success: true,
       data: employees,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
     });
   } catch (error) {
     console.error("Get employees error:", error);
