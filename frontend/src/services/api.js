@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://kenospace.online/api",
+  baseURL: "https://api.kenospace.online/api",
   withCredentials: true,
 });
 
