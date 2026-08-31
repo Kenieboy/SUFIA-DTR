@@ -82,7 +82,7 @@ export function UserProvider({ children }) {
 
     setUser(profileResponse.data.user);
 
-    window.location.reload();
+    //window.location.reload();
 
     return response.data;
   }
