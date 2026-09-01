@@ -17,11 +17,21 @@ export function UserProvider({ children }) {
 
       setUser(response.data.user);
     } catch (error) {
+      // if (error.response?.status === 401) {
+      //   // Not authenticated
+      //   setUser(null);
+      // } else {
+      //   console.error("Failed to load user:", error);
+      // }
+
+      // const message = error.response?.data?.message;
+
+      // console.log("Status:", error.response?.data?.success);
+      // console.log("Message:", message);
+
       if (error.response?.status === 401) {
-        // Not authenticated
         setUser(null);
-      } else {
-        console.error("Failed to load user:", error);
+        return;
       }
     } finally {
       setLoading(false);
