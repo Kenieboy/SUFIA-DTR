@@ -15,7 +15,7 @@ import {
   Clock,
   Camera,
 } from "lucide-react";
-import api from "../services/api";
+import api, { photoUploadURL } from "../services/api";
 
 import { getDepartments } from "../services/departmentServices";
 import ComboboxField from "./ComboboxField";
@@ -208,7 +208,7 @@ export default function EmployeeForm() {
     setErrors({});
 
     if (isEdit && employee.photo) {
-      const apiUrl = "https://api.kenospace.online";
+      const apiUrl = photoUploadURL;
 
       setPhotoPreview(`${apiUrl}${employee.photo}`);
     } else {

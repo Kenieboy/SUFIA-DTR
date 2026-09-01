@@ -5,6 +5,8 @@ const api = axios.create({
   withCredentials: true,
 });
 
+export const photoUploadURL = "https://api.kenospace.online";
+
 export default api;
 
 //baseURL: "http://localhost:5000/api",
