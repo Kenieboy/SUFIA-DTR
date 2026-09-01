@@ -22,8 +22,8 @@ function Page({ title }) {
 }
 export default function App() {
   return (
-    <UserProvider>
-      <BrowserRouter>
+    <BrowserRouter>
+      <UserProvider>
         <Routes>
           {/* Public */}
           <Route path="/login" element={<Login />} />
@@ -72,7 +72,7 @@ export default function App() {
           {/* Unknown route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
-    </UserProvider>
+      </UserProvider>
+    </BrowserRouter>
   );
 }

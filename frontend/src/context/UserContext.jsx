@@ -18,7 +18,7 @@ export function UserProvider({ children }) {
       setUser(response.data.user);
     } catch (error) {
       if (error.response?.status === 401) {
-        // Token is missing or expired
+        // Not authenticated
         setUser(null);
       } else {
         console.error("Failed to load user:", error);
@@ -43,20 +43,19 @@ export function UserProvider({ children }) {
       (response) => response,
 
       async (error) => {
-        if (error.response?.status === 401) {
-          try {
-            // Tell backend to clear the authentication cookie
-            await api.post("/auth/logout");
-          } catch {
-            // Ignore logout errors
-          } finally {
-            // Remove user from React state
-            setUser(null);
+        const status = error.response?.status;
+        const url = error.config?.url || "";
 
-            // Redirect to login
-            if (window.location.pathname !== "/login") {
-              window.location.href = "/login";
-            }
+        const isAuthRequest =
+          url.includes("/auth/login") ||
+          url.includes("/auth/profile") ||
+          url.includes("/auth/logout");
+
+        if (status === 401 && !isAuthRequest) {
+          setUser(null);
+
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
           }
         }
 
@@ -82,8 +81,6 @@ export function UserProvider({ children }) {
 
     setUser(profileResponse.data.user);
 
-    //window.location.reload();
-
     return response.data;
   }
 
@@ -99,10 +96,6 @@ export function UserProvider({ children }) {
       }
     } finally {
       setUser(null);
-
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
     }
   }
 
