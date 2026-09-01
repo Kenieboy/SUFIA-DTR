@@ -208,7 +208,7 @@ export default function EmployeeForm() {
     setErrors({});
 
     if (isEdit && employee.photo) {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const apiUrl = "https://api.kenospace.online";
 
       setPhotoPreview(`${apiUrl}${employee.photo}`);
     } else {
