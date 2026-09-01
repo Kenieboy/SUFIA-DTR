@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 import {
   getEmployees,
@@ -14,11 +16,37 @@ import { authenticate } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 const upload = multer({
-  dest: "uploads/employees/",
+  dest: "uploads/temp/",
 });
 
-// All employee routes require authentication
+// ========================================
+// ALL EMPLOYEE ROUTES REQUIRE AUTH
+// ========================================
+
 router.use(authenticate);
+
+// ========================================
+// EMPLOYEE PHOTO
+// ========================================
+
+router.get("/photo/:filename", (req, res) => {
+  const { filename } = req.params;
+
+  const filePath = path.join(process.cwd(), "uploads", "employee", filename);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({
+      success: false,
+      message: "Employee photo not found.",
+    });
+  }
+
+  res.sendFile(filePath);
+});
+
+// ========================================
+// EMPLOYEES
+// ========================================
 
 // GET /api/employees
 router.get("/", getEmployees);

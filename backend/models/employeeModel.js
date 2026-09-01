@@ -497,6 +497,19 @@ export async function updateEmployee(id, employee) {
   return result.affectedRows;
 }
 
+export async function updateEmployeePhoto(id, photo) {
+  const [result] = await db.execute(
+    `
+      UPDATE employees
+      SET photo = ?
+      WHERE id = ?
+    `,
+    [photo, id],
+  );
+
+  return result.affectedRows;
+}
+
 export async function deleteEmployee(id) {
   const [result] = await db.execute(
     `

@@ -3,6 +3,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
 
 import authRoutes from "./routes/authRoutes.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
@@ -24,6 +25,12 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// ========================================
+// STATIC UPLOADS
+// ========================================
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Routes
 app.use("/api/auth", authRoutes);

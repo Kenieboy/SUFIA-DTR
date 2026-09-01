@@ -162,6 +162,9 @@ export default function EmployeeForm() {
   const [form, setForm] = useState(initialForm);
   const [photoPreview, setPhotoPreview] = useState("");
 
+  // Validation errors
+  const [errors, setErrors] = useState({});
+
   /* =================================
      GET EMPLOYEE
   ================================= */
@@ -176,23 +179,14 @@ export default function EmployeeForm() {
     queryFn: async () => {
       const response = await api.get(`/employees/${id}`);
 
-      /*
-       * Your backend response is:
-       *
-       * {
-       *   success: true,
-       *   data: {...}
-       * }
-       */
-
       return response.data.data;
     },
     enabled: isEdit,
   });
 
   /* =================================
-   GET DEPARTMENTS
-================================= */
+     GET DEPARTMENTS
+  ================================= */
 
   const { data: departments = [], isLoading: departmentsLoading } = useQuery({
     queryKey: ["departments"],
@@ -210,25 +204,17 @@ export default function EmployeeForm() {
 
     setForm(mappedEmployee);
 
-    if (employee.photo) {
-      /*
-       * Change this to your actual backend URL.
-       *
-       * Example:
-       * http://localhost:5000/uploads/employees/EMP-0007.jpg
-       */
+    // Clear validation errors when employee loads
+    setErrors({});
 
-      setPhotoPreview(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/uploads/${employee.photo}`,
-      );
+    if (isEdit && employee.photo) {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+      setPhotoPreview(`${apiUrl}${employee.photo}`);
+    } else {
+      setPhotoPreview("");
     }
-  }, [employee]);
-
-  // useEffect(() => {
-  //   if (isEdit) {
-  //     console.log("EDIT FORM:", form);
-  //   }
-  // }, [form, isEdit]);
+  }, [employee, isEdit]);
 
   /* =================================
      CREATE / UPDATE MUTATION
@@ -277,6 +263,18 @@ export default function EmployeeForm() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear field error when user changes the field
+    setErrors((prev) => {
+      if (!prev[name]) {
+        return prev;
+      }
+
+      const updatedErrors = { ...prev };
+      delete updatedErrors[name];
+
+      return updatedErrors;
+    });
   }
 
   /* =================================
@@ -297,16 +295,65 @@ export default function EmployeeForm() {
   }
 
   /* =================================
+     VALIDATE FORM
+  ================================= */
+
+  function validateForm() {
+    const newErrors = {};
+
+    /*
+     * Required fields
+     */
+
+    if (!form.employeeNo.trim()) {
+      newErrors.employeeNo = "Employee No. is required.";
+    }
+
+    if (!form.biometricId.trim()) {
+      newErrors.biometricId = "Biometric ID is required.";
+    }
+
+    if (!form.firstName.trim()) {
+      newErrors.firstName = "First Name is required.";
+    }
+
+    if (!form.lastName.trim()) {
+      newErrors.lastName = "Last Name is required.";
+    }
+
+    if (!form.departmentId) {
+      newErrors.departmentId = "Department is required.";
+    }
+
+    if (!form.dateHired) {
+      newErrors.dateHired = "Date Hired is required.";
+    }
+
+    setErrors(newErrors);
+
+    /*
+     * Return true if there are no errors
+     */
+    return Object.keys(newErrors).length === 0;
+  }
+
+  /* =================================
      SAVE EMPLOYEE
   ================================= */
 
   function handleSubmit(e) {
     e.preventDefault();
 
+    /*
+     * Validate before saving
+     */
+    if (!validateForm()) {
+      return;
+    }
+
     const data = new FormData();
 
     /*
-     * IMPORTANT:
      * Convert React camelCase fields
      * to backend snake_case fields.
      */
@@ -527,6 +574,7 @@ export default function EmployeeForm() {
               required
               bold
               uppercase
+              error={errors.employeeNo}
             />
 
             <InputField
@@ -538,6 +586,7 @@ export default function EmployeeForm() {
               required
               bold
               uppercase
+              error={errors.biometricId}
             />
 
             <SelectField
@@ -565,6 +614,7 @@ export default function EmployeeForm() {
               required
               bold
               uppercase
+              error={errors.firstName}
             />
 
             <InputField
@@ -586,6 +636,7 @@ export default function EmployeeForm() {
               required
               bold
               uppercase
+              error={errors.lastName}
             />
 
             <SelectField
@@ -617,6 +668,7 @@ export default function EmployeeForm() {
               value={form.birthDate}
               onChange={handleChange}
               bold
+              required
             />
 
             <InputField
@@ -883,15 +935,6 @@ export default function EmployeeForm() {
             title="Employment Information"
             description="Position and employment details"
           >
-            {/* <InputField
-              label="Department ID"
-              name="departmentId"
-              type="number"
-              value={form.departmentId}
-              onChange={handleChange}
-              placeholder="Department ID"
-            /> */}
-
             <ComboboxField
               label="Department"
               name="departmentId"
@@ -900,6 +943,7 @@ export default function EmployeeForm() {
               options={departments}
               loading={departmentsLoading}
               required
+              error={errors.departmentId}
             />
 
             <InputField
@@ -911,26 +955,8 @@ export default function EmployeeForm() {
               icon={CalendarDays}
               required
               bold
+              error={errors.dateHired}
             />
-
-            {/* <SelectField
-              label="Pay Type"
-              name="payType"
-              value={form.payType}
-              onChange={handleChange}
-              options={["Daily", "Monthly"]}
-              required
-            /> */}
-
-            {/* <InputField
-              label="Minimum Allowance"
-              name="minAllow"
-              type="number"
-              step="0.01"
-              value={form.minAllow}
-              onChange={handleChange}
-              placeholder="0.00"
-            /> */}
 
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
@@ -1118,6 +1144,7 @@ function InputField({
   step,
   bold = false,
   uppercase = false,
+  error = "",
 }) {
   return (
     <div>
@@ -1149,7 +1176,7 @@ function InputField({
           step={step}
           className={`
             w-full rounded-lg
-            border border-slate-200
+            border
             bg-white py-2
             ${Icon ? "pl-9" : "pl-3"}
             pr-3 text-[12px]
@@ -1158,11 +1185,16 @@ function InputField({
             text-slate-700
             outline-none transition
             placeholder:text-slate-400
-            focus:border-blue-500
-            focus:ring-2 focus:ring-blue-500/10
+            ${
+              error
+                ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
+            }
           `}
         />
       </div>
+
+      {error && <p className="mt-1 text-[11px] text-red-500">{error}</p>}
     </div>
   );
 }

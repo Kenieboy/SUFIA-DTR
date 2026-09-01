@@ -11,6 +11,7 @@ export default function ComboboxField({
   onChange,
   options = [],
   loading = false,
+  required = false,
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -45,23 +46,26 @@ export default function ComboboxField({
     <div className="relative">
       <label className="mb-1.5 block text-[11px] font-medium text-slate-600">
         {label}
+
+        {required && <span className="ml-1 text-red-500">*</span>}
       </label>
 
       {/* Selected value */}
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="
-          flex w-full items-center justify-between
-          rounded-lg border border-slate-200
-          bg-white px-3 py-2
-          text-left text-[12px]
-          text-slate-700
-          outline-none transition
-          hover:border-slate-300
-          focus:border-blue-500
-          focus:ring-2 focus:ring-blue-500/10
-        "
+        className={`
+    flex w-full items-center justify-between
+    rounded-lg border
+    bg-white px-3 py-2
+    text-left text-[12px]
+    text-slate-700
+    outline-none transition
+    hover:border-slate-300
+    focus:border-blue-500
+    focus:ring-2 focus:ring-blue-500/10
+    ${required && !value ? "border-red-300" : "border-slate-200"}
+  `}
       >
         <span className={selectedOption ? "text-slate-700" : "text-slate-400"}>
           {selectedOption
