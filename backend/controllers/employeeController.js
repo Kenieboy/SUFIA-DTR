@@ -77,67 +77,6 @@ export async function getEmployee(req, res) {
   }
 }
 
-// export async function createEmployeeRecord(req, res) {
-//   try {
-//     const employee = req.body;
-
-//     if (!employee.employee_no) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Employee number is required.",
-//       });
-//     }
-
-//     if (!employee.biometric_id) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Biometric ID is required.",
-//       });
-//     }
-
-//     // Check duplicate employee number
-//     const existingEmployee = await getEmployeeByEmployeeNo(
-//       employee.employee_no,
-//     );
-
-//     if (existingEmployee) {
-//       return res.status(409).json({
-//         success: false,
-//         message: "Employee number already exists.",
-//       });
-//     }
-
-//     // Check duplicate biometric ID
-//     const existingBiometric = await getEmployeeByBiometricId(
-//       employee.biometric_id,
-//     );
-
-//     if (existingBiometric) {
-//       return res.status(409).json({
-//         success: false,
-//         message: "Biometric ID already exists.",
-//       });
-//     }
-
-//     const id = await createEmployee(employee);
-
-//     const newEmployee = await getEmployeeById(id);
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Employee created successfully.",
-//       data: newEmployee,
-//     });
-//   } catch (error) {
-//     console.error("Create employee error:", error);
-
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to create employee.",
-//     });
-//   }
-// }
-
 export async function createEmployeeRecord(req, res) {
   try {
     const employee = req.body;

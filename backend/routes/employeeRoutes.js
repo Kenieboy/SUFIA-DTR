@@ -15,9 +15,9 @@ import { authenticate } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-const upload = multer({
-  dest: "uploads/temp/",
-});
+// const upload = multer({
+//   dest: "uploads/temp/",
+// });
 
 // ========================================
 // ALL EMPLOYEE ROUTES REQUIRE AUTH
@@ -29,20 +29,20 @@ router.use(authenticate);
 // EMPLOYEE PHOTO
 // ========================================
 
-router.get("/photo/:filename", (req, res) => {
-  const { filename } = req.params;
+// router.get("/photo/:filename", (req, res) => {
+//   const { filename } = req.params;
 
-  const filePath = path.join(process.cwd(), "uploads", "employee", filename);
+//   const filePath = path.join(process.cwd(), "uploads", "employee", filename);
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({
-      success: false,
-      message: "Employee photo not found.",
-    });
-  }
+//   if (!fs.existsSync(filePath)) {
+//     return res.status(404).json({
+//       success: false,
+//       message: "Employee photo not found.",
+//     });
+//   }
 
-  res.sendFile(filePath);
-});
+//   res.sendFile(filePath);
+// });
 
 // ========================================
 // EMPLOYEES
@@ -55,10 +55,12 @@ router.get("/", getEmployees);
 router.get("/:id", getEmployee);
 
 // POST /api/employees
-router.post("/", upload.single("photo"), createEmployeeRecord);
+//router.post("/", upload.single("photo"), createEmployeeRecord);
+router.post("/", createEmployeeRecord);
 
 // PUT /api/employees/:id
-router.put("/:id", upload.single("photo"), updateEmployeeRecord);
+//router.put("/:id", upload.single("photo"), updateEmployeeRecord);
+router.put("/:id", updateEmployeeRecord);
 
 // DELETE /api/employees/:id
 router.delete("/:id", deleteEmployeeRecord);
